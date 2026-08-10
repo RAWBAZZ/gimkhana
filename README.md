@@ -1,4 +1,4 @@
-# GIMKHANA — Dambel Bhaari, Attitude Jaari
+ # GIMKHANA — Dambel Bhaari, Attitude Jaari
 
 A nostalgic GIM music web app: Top 100 chart, 25-year timeline (2000–2025), mood-based
 browsing, a persistent player, search, favourites, and Surprise Me — built with

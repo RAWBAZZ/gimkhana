@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePlayer } from "@/lib/player-context";
 
+const SPOTIFY_PLAYLIST_URL =
+  "https://open.spotify.com/playlist/75zwc1fWU4EKVU2jSzkSAq";
+
 export default function Hero() {
   const { playing } = usePlayer();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -15,6 +18,7 @@ export default function Hero() {
     if (!video) return;
 
     video.muted = true;
+
     video.play().catch(() => {
       // Browser may require user interaction.
     });
@@ -78,11 +82,12 @@ export default function Hero() {
       {/* HERO CONTENT */}
       <div className="relative z-10">
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
 
+          {/* ENTER GIMKHANA */}
           <button
             onClick={enterGimkhana}
-            className="px-6 py-3 rounded-full font-bold text-[13px] text-paper shadow-pill"
+            className="px-6 py-3 rounded-full font-bold text-[13px] text-paper shadow-pill transition-transform active:scale-95"
             style={{
               background:
                 "linear-gradient(135deg,#C1442A,#D8A248)",
@@ -91,12 +96,26 @@ export default function Hero() {
             ENTER GIMKHANA
           </button>
 
+          {/* EXPLORE TOP 100 */}
           <Link
             href="/top-100"
-            className="px-6 py-3 rounded-full font-bold text-[13px] text-paper border border-paper/40 bg-ink/25 backdrop-blur"
+            className="px-6 py-3 rounded-full font-bold text-[13px] text-paper border border-paper/40 bg-ink/25 backdrop-blur transition-transform active:scale-95"
           >
             EXPLORE TOP 100
           </Link>
+
+          {/* LISTEN ON SPOTIFY */}
+          <a
+            href={SPOTIFY_PLAYLIST_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-6 py-3 rounded-full font-bold text-[13px] text-white shadow-pill transition-transform active:scale-95"
+            style={{
+              background: "#1DB954",
+            }}
+          >
+            ▶ LISTEN ON SPOTIFY
+          </a>
 
         </div>
 

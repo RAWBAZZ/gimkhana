@@ -14,8 +14,12 @@ interface PlayerState {
   playing: boolean;
   progress: number;
   favourites: Set<number>;
+
   play: (s: Song) => void;
   toggle: () => void;
+  next: () => void;
+  previous: () => void;
+
   toggleFav: (rank: number) => void;
   isFav: (rank: number) => boolean;
 }
@@ -32,23 +36,28 @@ export function PlayerProvider({
   const [current, setCurrent] = useState<Song>(SONGS[0]);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [favourites, setFavourites] = useState<Set<number>>(new Set());
+  const [favourites, setFavourites] = useState<Set<number>>(
+    new Set()
+  );
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Load favourites
+  // ---------------------------------------------------------
+  // FAVOURITES
+  // ---------------------------------------------------------
+
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(FAV_KEY);
+
       if (raw) {
         setFavourites(new Set(JSON.parse(raw)));
       }
     } catch {
-      // ignore
+      // Ignore localStorage errors
     }
   }, []);
 
-  // Save favourites
   useEffect(() => {
     try {
       window.localStorage.setItem(
@@ -56,47 +65,108 @@ export function PlayerProvider({
         JSON.stringify(Array.from(favourites))
       );
     } catch {
-      // ignore
+      // Ignore localStorage errors
     }
   }, [favourites]);
 
-  // Create audio element once
+  // ---------------------------------------------------------
+  // AUDIO ENGINE
+  // ---------------------------------------------------------
+
   useEffect(() => {
     const audio = new Audio();
+
     audio.preload = "auto";
+
     audioRef.current = audio;
 
-    const updateProgress = () => {
-      if (!audio.duration || !Number.isFinite(audio.duration)) {
+    const handleTimeUpdate = () => {
+      if (
+        !audio.duration ||
+        !Number.isFinite(audio.duration)
+      ) {
         setProgress(0);
         return;
       }
 
-      setProgress((audio.currentTime / audio.duration) * 100);
+      setProgress(
+        (audio.currentTime / audio.duration) * 100
+      );
     };
 
     const handleEnded = () => {
-      setPlaying(false);
       setProgress(100);
+
+      // Automatically move to next track
+      const currentIndex = SONGS.findIndex(
+        (song) => song.rank === current.rank
+      );
+
+      const nextIndex =
+        currentIndex >= 0 && currentIndex < SONGS.length - 1
+          ? currentIndex + 1
+          : 0;
+
+      const nextSong = SONGS[nextIndex];
+
+      setCurrent(nextSong);
+      setProgress(0);
+
+      if (nextSong.audio) {
+        audio.src = nextSong.audio;
+
+        audio
+          .play()
+          .then(() => {
+            setPlaying(true);
+          })
+          .catch(() => {
+            setPlaying(false);
+          });
+      } else {
+        setPlaying(false);
+      }
     };
 
-    audio.addEventListener("timeupdate", updateProgress);
-    audio.addEventListener("ended", handleEnded);
+    audio.addEventListener(
+      "timeupdate",
+      handleTimeUpdate
+    );
+
+    audio.addEventListener(
+      "ended",
+      handleEnded
+    );
 
     return () => {
       audio.pause();
-      audio.removeEventListener("timeupdate", updateProgress);
-      audio.removeEventListener("ended", handleEnded);
+
+      audio.removeEventListener(
+        "timeupdate",
+        handleTimeUpdate
+      );
+
+      audio.removeEventListener(
+        "ended",
+        handleEnded
+      );
+
       audioRef.current = null;
     };
-  }, []);
+  }, [current]);
 
-  // Load current song whenever current changes
+  // ---------------------------------------------------------
+  // LOAD CURRENT SONG
+  // ---------------------------------------------------------
+
   useEffect(() => {
     const audio = audioRef.current;
+
     if (!audio) return;
 
     audio.pause();
+
+    setProgress(0);
 
     if (current.audio) {
       audio.src = current.audio;
@@ -105,12 +175,15 @@ export function PlayerProvider({
       audio.removeAttribute("src");
       audio.load();
     }
-
-    setProgress(0);
   }, [current]);
+
+  // ---------------------------------------------------------
+  // PLAY SONG
+  // ---------------------------------------------------------
 
   const play = async (song: Song) => {
     const audio = audioRef.current;
+
     if (!audio) return;
 
     setCurrent(song);
@@ -126,29 +199,138 @@ export function PlayerProvider({
 
     try {
       await audio.play();
+
       setPlaying(true);
     } catch (error) {
-      console.error("Audio playback failed:", error);
+      console.error(
+        "GIMKHANA audio playback failed:",
+        error
+      );
+
       setPlaying(false);
     }
   };
 
+  // ---------------------------------------------------------
+  // PLAY / PAUSE
+  // ---------------------------------------------------------
+
   const toggle = async () => {
     const audio = audioRef.current;
+
     if (!audio || !current.audio) return;
 
     if (audio.paused) {
       try {
         await audio.play();
+
         setPlaying(true);
       } catch (error) {
-        console.error("Audio playback failed:", error);
+        console.error(
+          "GIMKHANA audio playback failed:",
+          error
+        );
       }
     } else {
       audio.pause();
+
       setPlaying(false);
     }
   };
+
+  // ---------------------------------------------------------
+  // NEXT
+  // ---------------------------------------------------------
+
+  const next = () => {
+    const currentIndex = SONGS.findIndex(
+      (song) => song.rank === current.rank
+    );
+
+    const nextIndex =
+      currentIndex >= 0 && currentIndex < SONGS.length - 1
+        ? currentIndex + 1
+        : 0;
+
+    const nextSong = SONGS[nextIndex];
+
+    setCurrent(nextSong);
+    setProgress(0);
+
+    const audio = audioRef.current;
+
+    if (!audio) return;
+
+    audio.pause();
+
+    if (!nextSong.audio) {
+      setPlaying(false);
+      audio.removeAttribute("src");
+      audio.load();
+      return;
+    }
+
+    audio.src = nextSong.audio;
+    audio.currentTime = 0;
+
+    audio
+      .play()
+      .then(() => {
+        setPlaying(true);
+      })
+      .catch(() => {
+        setPlaying(false);
+      });
+  };
+
+  // ---------------------------------------------------------
+  // PREVIOUS
+  // ---------------------------------------------------------
+
+  const previous = () => {
+    const currentIndex = SONGS.findIndex(
+      (song) => song.rank === current.rank
+    );
+
+    const previousIndex =
+      currentIndex > 0
+        ? currentIndex - 1
+        : SONGS.length - 1;
+
+    const previousSong = SONGS[previousIndex];
+
+    setCurrent(previousSong);
+    setProgress(0);
+
+    const audio = audioRef.current;
+
+    if (!audio) return;
+
+    audio.pause();
+
+    if (!previousSong.audio) {
+      setPlaying(false);
+      audio.removeAttribute("src");
+      audio.load();
+      return;
+    }
+
+    audio.src = previousSong.audio;
+    audio.currentTime = 0;
+
+    audio
+      .play()
+      .then(() => {
+        setPlaying(true);
+      })
+      .catch(() => {
+        setPlaying(false);
+      });
+  };
+
+  // ---------------------------------------------------------
+  // FAVOURITES
+  // ---------------------------------------------------------
 
   const toggleFav = (rank: number) => {
     setFavourites((prev) => {
@@ -164,7 +346,12 @@ export function PlayerProvider({
     });
   };
 
-  const isFav = (rank: number) => favourites.has(rank);
+  const isFav = (rank: number) =>
+    favourites.has(rank);
+
+  // ---------------------------------------------------------
+  // PROVIDER
+  // ---------------------------------------------------------
 
   return (
     <PlayerContext.Provider
@@ -173,8 +360,12 @@ export function PlayerProvider({
         playing,
         progress,
         favourites,
+
         play,
         toggle,
+        next,
+        previous,
+
         toggleFav,
         isFav,
       }}

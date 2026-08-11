@@ -79,7 +79,7 @@ function buildSongs(): Song[] {
       category,
       duration: `${mins}:${secs.toString().padStart(2, "0")}`,
       cover: null,
-      audio: null,
+      audio: audio: rank === 1 ? "/naseeb.mp3" : null,
     };
   });
 }

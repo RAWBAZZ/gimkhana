@@ -4,9 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePlayer } from "@/lib/player-context";
 
-const SPOTIFY_PLAYLIST_URL =
-  "https://open.spotify.com/playlist/75zwc1fWU4EKVU2jSzkSAq";
-
 export default function Hero() {
   const { playing } = usePlayer();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -104,18 +101,16 @@ export default function Hero() {
             EXPLORE TOP 100
           </Link>
 
-          {/* LISTEN ON SPOTIFY */}
-          <a
-            href={SPOTIFY_PLAYLIST_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-6 py-3 rounded-full font-bold text-[13px] text-white shadow-pill transition-transform active:scale-95"
+          {/* LISTEN NOW — scrolls to embedded Spotify player */}
+          <Link
+            href="#spotify"
+            className="px-6 py-3 rounded-full font-bold text-[13px] text-white shadow-pill transition-transform active:scale-95 flex items-center gap-1.5"
             style={{
               background: "#1DB954",
             }}
           >
-            ▶ LISTEN ON SPOTIFY
-          </a>
+            ▶ LISTEN NOW
+          </Link>
 
         </div>
 

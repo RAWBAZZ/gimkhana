@@ -68,7 +68,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="px-5 md:px-8 pb-8">
+      <div id="spotify" className="px-5 md:px-8 pb-8">
         <SectionHeader
           eyebrow="LISTEN NOW"
           title="GIMKHANA on Spotify"

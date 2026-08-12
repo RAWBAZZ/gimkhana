@@ -5,6 +5,7 @@ import Hero from "@/components/Hero";
 import SongRow from "@/components/SongRow";
 import MoodCards from "@/components/MoodCards";
 import SurpriseMe from "@/components/SurpriseMe";
+import SpotifyPlayer from "@/components/SpotifyPlayer";
 
 function SectionHeader({
   eyebrow,
@@ -65,6 +66,15 @@ export default function HomePage() {
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="px-5 md:px-8 pb-8">
+        <SectionHeader
+          eyebrow="LISTEN NOW"
+          title="GIMKHANA on Spotify"
+          sub="Play the official party anthems playlist."
+        />
+        <SpotifyPlayer />
       </div>
 
       <div className="px-5 md:px-8 pb-6">
